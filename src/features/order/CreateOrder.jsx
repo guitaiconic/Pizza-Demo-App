@@ -1,5 +1,6 @@
 
-import { Form } from "react-router-dom";
+import { Form, redirect, useActionData, useNavigation } from "react-router-dom";
+import { createOrder } from "../../services/apiRestaurant";
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
   /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/.test(
@@ -31,6 +32,15 @@ const fakeCart = [
 ];
 
 function CreateOrder() {
+
+  const navigation  = useNavigation()
+  const isSubmitting = navigation.state === 'submitting'
+
+  //Errors for wrong data such as number etc
+  const formErrors = useActionData()
+
+
+
   // const [withPriority, setWithPriority] = useState(false);
   const cart = fakeCart;
 
@@ -38,7 +48,7 @@ function CreateOrder() {
     <div>
       <h2>Ready to order? Let's go!</h2>
 
-      {/* <Form method="POST" action="/order/new" >  */} To route this page to the new page
+      {/* <Form method="POST" action="/order/new" >  To route this page to the new page */}
       <Form method="Post">
         <div>
           <label>First Name</label>
@@ -50,6 +60,7 @@ function CreateOrder() {
           <div>
             <input type="tel" name="phone" required />
           </div>
+          {formErrors?.phone && <p>{formErrors.phone}</p>}
         </div>
 
         <div>
@@ -71,7 +82,8 @@ function CreateOrder() {
         </div>
 
         <div>
-          <button>Order now</button>
+          <input type="hidden" name="cart" value={JSON.stringify(cart)} />
+          <button disabled = {isSubmitting }>{isSubmitting ? 'Placing order...' : 'Order now'}</button>
         </div>
       </Form>
     </div>
@@ -80,8 +92,24 @@ function CreateOrder() {
 
 export async function action({request}){
   const formData = await request.formData();
-  console.log(formData)
-  return null
+  const data = Object.fromEntries(formData.entries());
+  console.log(data)
+
+  const order = {
+    ...data,
+    cart: JSON.parse(data.cart),
+    priority: data.priority === 'on'
+  }
+  //Handling the errors during the logging process
+  const errors = {}
+  if(!isValidPhone(order.phone)) errors.phone = "Please give us your correct phone number. We might need it to contact you.";
+
+  if(Object.keys(errors).length > 0 ) return errors
+
+  // If everything is okay, create new order and redirect
+  const newOrder = await createOrder(order)
+
+  return redirect (`/order/${newOrder.id}`)
 }
 
 export default CreateOrder;
