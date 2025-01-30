@@ -1,4 +1,3 @@
-// Test ID: IIDSAT
 import OrderItem from './OrderItem';
 import { useFetcher, useLoaderData } from 'react-router-dom';
 import { getOrder } from '../../services/apiRestaurant';
@@ -11,8 +10,6 @@ import { useEffect } from 'react';
 
 function Order() {
   const order = useLoaderData();
-
-  //To navigate to menu route
   const fetcher = useFetcher();
 
   useEffect(
@@ -22,9 +19,6 @@ function Order() {
     [fetcher],
   );
 
-  console.log(fetcher.data);
-
-  // Everyone can search for all orders, so for privacy reasons we're gonna gonna exclude names or address, these are only for the restaurant staff
   const {
     id,
     status,
@@ -40,7 +34,6 @@ function Order() {
     <div className="space-y-8 px-4 py-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-semibold">Order #{id} status</h2>
-
         <div className="space-x-2">
           {priority && (
             <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-red-50">
@@ -71,7 +64,8 @@ function Order() {
             item={item}
             isLoadingIngredients={fetcher.state === 'loading'}
             ingredients={
-              fetcher.data?.find((el) => el.id === item.pizzaId).ingredients
+              fetcher?.data?.find((el) => el.id === item.pizzaId)
+                ?.ingredients ?? []
             }
           />
         ))}
@@ -93,7 +87,7 @@ function Order() {
     </div>
   );
 }
-//  How to get the order ID from the URL
+
 export async function loader({ params }) {
   const order = await getOrder(params.orderId);
   return order;
